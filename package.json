@@ -1,0 +1,9 @@
+{
+  "name": "chatbot-ai-backend",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {},
+  "dependencies": {
+    "@google/generative-ai": "^0.3.1"
+  }
+}
