@@ -22,16 +22,6 @@ function extractJson(text) {
 
 // Handler utama untuk Vercel Serverless Function
 export default async function handler(req, res) {
-  // --- START: Langkah Debugging ---
-  // Log ini untuk memastikan server Vercel lokal berhasil memuat API Key.
-  console.log(
-    "API Key Loaded by Server:",
-    process.env.GEMINI_API_KEY
-      ? "Yes, key is present."
-      : "No, key is UNDEFINED or empty."
-  );
-  // --- END: Langkah Debugging ---
-
   // --- START: Penambahan Header CORS ---
   // Daftar origin yang diizinkan untuk mengakses API ini
   const allowedOrigins = [
@@ -49,9 +39,20 @@ export default async function handler(req, res) {
   // Browser akan mengirim request 'OPTIONS' (preflight) sebelum 'POST'
   // untuk mengecek izin CORS. Kita harus menanganinya.
   if (req.method === "OPTIONS") {
-    return res.status(204).end();
+    res.status(204).end();
+    return;
   }
   // --- END: Penambahan Header CORS ---
+
+  // --- START: Langkah Debugging ---
+  // Log ini untuk memastikan server Vercel lokal berhasil memuat API Key.
+  console.log(
+    "API Key Loaded by Server:",
+    process.env.GEMINI_API_KEY
+      ? "Yes, key is present."
+      : "No, key is UNDEFINED or empty."
+  );
+  // --- END: Langkah Debugging ---
 
   // Hanya izinkan metode POST untuk analisis
   if (req.method !== "POST") {
