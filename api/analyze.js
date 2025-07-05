@@ -2,7 +2,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 
 // Inisialisasi Gemini dengan API Key dari Environment Variables Vercel
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }); // REKOMENDASI: Gunakan model 1.5 Flash yang lebih baru dan lebih baik dalam mengikuti instruksi JSON.
 
 // Helper function untuk mengekstrak JSON dari string yang mungkin dibungkus markdown
 function extractJson(text) {
@@ -65,13 +65,20 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "Text for analysis is required." });
   }
 
-  // Revisi prompt agar AI membalas dengan bahasa yang sama dengan input
-  const prompt = `You are an expert AI for detecting scams, hoaxes, online gambling promotions.
-Analyze the text below and classify it into one of: "Scam", "Online Gambling", "Hoax", "Safe".
-Return a strict JSON object with this structure: {"category": "...", "confidence": "<LOW|MEDIUM|HIGH>", "sentiment": "<Positive|Negative|Neutral>", "explanation": "...", "risk_indicators": [...], "language": "<detected language name in English, e.g. 'English', 'Indonesian', etc.>"}.
-Do not include any other text or markdown formatting like \`\`\`json. Just the raw JSON object.
-IMPORTANT: Your explanation and all output must use the same language as the input text. If the input is in Indonesian, answer in Indonesian. If the input is in English, answer in English. If the input is in another language, answer in that language.
-Text to analyze: ${text}`;
+  // PROMPT YANG DIPERBAIKI: Lebih tegas dan tidak ambigu untuk memastikan format JSON yang benar.
+  const prompt = `Analyze the following text. Your response MUST be a single, valid JSON object and nothing else. Do not use markdown formatting like \`\`\`json.
+The JSON object must have these exact English keys: "category", "confidence", "sentiment", "explanation", "risk_indicators", "language".
+The values for "explanation" and "risk_indicators" should be in the same language as the input text.
+The value for "category" must be one of: "Scam", "Online Gambling", "Hoax", "Safe".
+The value for "confidence" must be one of: "LOW", "MEDIUM", "HIGH".
+The value for "sentiment" must be one of: "Positive", "Negative", "Neutral".
+The value for "language" must be the detected language name in English.
+
+Text to analyze:
+\`\`\`
+${text}
+\`\`\`
+`;
 
   try {
     const result = await model.generateContent(prompt);
@@ -81,16 +88,38 @@ Text to analyze: ${text}`;
     // Log respons mentah dari AI untuk debugging
     console.log("Raw response from Gemini:", rawText);
 
-    // Bersihkan dan parse JSON
+    // 1. Ekstrak JSON dari markdown jika ada (sebagai fallback)
     const cleanedText = extractJson(rawText);
-    const parsedJson = JSON.parse(cleanedText);
 
-    res.status(200).json(parsedJson);
+    // 2. Sanitasi string untuk menghapus newline yang bisa merusak parser
+    const sanitizedJsonString = cleanedText.replace(/\n|\r/g, "");
+    const parsedJson = JSON.parse(sanitizedJsonString);
+
+    // 3. Normalisasi data untuk memastikan kunci selalu dalam bahasa Inggris,
+    //    meskipun AI salah memberikan kunci dalam bahasa Indonesia.
+    const normalizedData = {
+      category: parsedJson.category || parsedJson.kategori || "Unknown",
+      confidence: parsedJson.confidence || "N/A",
+      sentiment: parsedJson.sentiment || "N/A",
+      explanation:
+        parsedJson.explanation ||
+        parsedJson.penjelasan ||
+        "No explanation provided.",
+      risk_indicators:
+        parsedJson.risk_indicators || parsedJson.indikator_bahaya || [],
+      language: parsedJson.language || "Unknown",
+    };
+
+    res.status(200).json(normalizedData);
   } catch (error) {
     // Log error lengkap di sisi server untuk debugging
     console.error("Error calling Gemini API or parsing response:", error);
     res
       .status(500)
-      .json({ error: "Failed to get a valid response from the AI model." });
+      // Berikan pesan error yang lebih spesifik
+      .json({
+        error: "AI response format error. Please try again later.",
+        raw: rawText || "No raw response available.",
+      });
   }
 }
