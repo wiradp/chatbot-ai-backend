@@ -83,7 +83,14 @@ ${text}
   try {
     const result = await model.generateContent(prompt);
     const response = await result.response;
-    const rawText = response.text();
+    let rawText = "";
+    try {
+      rawText = response.text();
+    } catch (e) {
+      // Handle cases where text() might fail, though unlikely for this model
+      console.error("Error getting text from response:", e);
+      throw new Error("Could not extract text from AI response.");
+    }
 
     // Log respons mentah dari AI untuk debugging
     console.log("Raw response from Gemini:", rawText);
@@ -93,7 +100,16 @@ ${text}
 
     // 2. Sanitasi string untuk menghapus newline yang bisa merusak parser
     const sanitizedJsonString = cleanedText.replace(/\n|\r/g, "");
-    const parsedJson = JSON.parse(sanitizedJsonString);
+    let parsedJson;
+    try {
+      parsedJson = JSON.parse(sanitizedJsonString);
+    } catch (e) {
+      console.error(
+        "Failed to parse sanitized JSON string:",
+        sanitizedJsonString
+      );
+      throw new Error(`JSON parsing error: ${e.message}`);
+    }
 
     // 3. Normalisasi data untuk memastikan kunci selalu dalam bahasa Inggris,
     //    meskipun AI salah memberikan kunci dalam bahasa Indonesia.
@@ -119,7 +135,7 @@ ${text}
       // Berikan pesan error yang lebih spesifik
       .json({
         error: "AI response format error. Please try again later.",
-        raw: rawText || "No raw response available.",
+        raw: error.raw || "No raw response available.",
       });
   }
 }
