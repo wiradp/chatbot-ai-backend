@@ -1,7 +1,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
 function extractJson(text) {
   const match = text.match(/```json\s*([\s\S]*?)\s*```/);
@@ -104,13 +104,13 @@ ${text}
       body: JSON.stringify(normalizedData),
     };
   } catch (error) {
-    console.error("Error calling Gemini API:", error);
+    console.error("Error calling Gemini API or parsing response:", error);
     return {
       statusCode: 500,
       headers,
       body: JSON.stringify({
         error: "AI response format error. Please try again later.",
-        raw: error.raw || "No raw response available.",
+        stack: error.stack,
       }),
     };
   }
