@@ -19,6 +19,7 @@ export async function handler(event, context) {
     "https://wiradp.github.io",
     "http://localhost:5500",
     "http://127.0.0.1:5500",
+    "http://localhost:8888",
   ];
   const origin = event.headers.origin || "";
   const headers = {
