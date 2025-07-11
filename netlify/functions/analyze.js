@@ -164,10 +164,19 @@ ${text}
     const response = await result.response;
     const rawText = await response.text();
 
+    let cleanText = rawText.trim();
+
+    if (cleanText.startsWith("```")) {
+      cleanText = cleanText
+        .replace(/```[a-z]*\n?/gi, "")
+        .replace(/```$/, "")
+        .trim();
+    }
+
     return {
       statusCode: 200,
       headers,
-      body: rawText,
+      body: cleanText,
     };
   } catch (error) {
     console.error("[❌ Gemini API Error]", error.message);
