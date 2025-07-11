@@ -149,7 +149,7 @@ export async function handler(event) {
     const prompt = `
 Analyze the following message and determine whether it is a Hoax, Scam, Online Gambling, or Safe.
 Return a JSON with the following fields:
-- category (Hoax, Scam, Gambling, or Safe)
+- category (Hoax, Scam, Online Gambling, or Safe)
 - confidence (LOW, MEDIUM, HIGH)
 - sentiment (Positive, Neutral, Negative)
 - explanation (1-2 sentence why it was classified that way and should be in the same language as the input text)
