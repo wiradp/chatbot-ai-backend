@@ -149,7 +149,7 @@ export async function handler(event) {
     const prompt = `
 Analyze the following message and determine whether it is a Hoax, Scam, Online Gambling, or Safe.
 Return a JSON with the following fields:
-- category (Hoax, Scam, Online Gambling, or Safe)
+- category (Hoax, Scam, Gambling, or Safe)
 - confidence (LOW, MEDIUM, HIGH)
 - sentiment (Positive, Neutral, Negative)
 - explanation (1-2 sentence why it was classified that way and should be in the same language as the input text)
@@ -164,19 +164,29 @@ ${text}
     const response = await result.response;
     const rawText = await response.text();
 
-    let cleanText = rawText.trim();
-
-    if (cleanText.startsWith("```")) {
-      cleanText = cleanText
+    let jsonString = rawText.trim();
+    if (jsonString.startsWith("```")) {
+      jsonString = jsonString
         .replace(/```[a-z]*\n?/gi, "")
         .replace(/```$/, "")
         .trim();
     }
 
+    // Parse the JSON string from the AI to validate and normalize it.
+    let data;
+    try {
+      data = JSON.parse(jsonString);
+    } catch (parseError) {
+      console.error("Failed to parse AI response as JSON:", jsonString);
+      // Throw an error that will be caught by the main catch block
+      throw new Error("AI returned data in an invalid format.");
+    }
+
     return {
       statusCode: 200,
       headers,
-      body: cleanText,
+      // Always stringify the final object to ensure a valid JSON response body.
+      body: JSON.stringify(data),
     };
   } catch (error) {
     console.error("[❌ Gemini API Error]", error.message);
