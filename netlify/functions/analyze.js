@@ -156,7 +156,7 @@ The JSON object must have these exact keys: "category", "confidence", "sentiment
 - "sentiment": Must be one of "Positive", "Negative", "Neutral".
 - "explanation": A 1-2 sentence explanation in the same language as the input text.
 - "risk_indicators": An array of strings listing warning signs. If the category is "Safe", this MUST be an empty array [].
-- "language": The detected language name in English.
+- "language": The detected language name in the same language as the input text.
 
 Text to analyze:
 ${text}`.trim();
