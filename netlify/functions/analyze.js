@@ -146,19 +146,20 @@ export async function handler(event) {
   try {
     const { text } = JSON.parse(event.body);
 
-    const prompt = `
-Analyze the following message and determine whether it is a Hoax, Scam, Online Gambling, or Safe.
-Return a JSON with the following fields:
-- category (Hoax, Scam, Gambling, or Safe)
-- confidence (LOW, MEDIUM, HIGH)
-- sentiment (Positive, Neutral, Negative)
-- explanation (1-2 sentence why it was classified that way and should be in the same language as the input text)
-- risk_indicators (array or string of any warning signs and should be in the same language as the input text)
-- language (detected language of the message)
+    const prompt =
+      `Analyze the following message. Your primary goal is to determine if it is a "Hoax", "Scam", "Online Gambling", or "Safe".
+You MUST return a single, valid JSON object and nothing else. Do not use markdown formatting like \`\`\`json.
+The JSON object must have these exact keys: "category", "confidence", "sentiment", "explanation", "risk_indicators", "language".
 
-Text:
-${text}
-    `.trim();
+- "category": Must be one of "Hoax", "Scam", "Online Gambling", or "Safe".
+- "confidence": Must be one of "LOW", "MEDIUM", "HIGH".
+- "sentiment": Must be one of "Positive", "Negative", "Neutral".
+- "explanation": A 1-2 sentence explanation in the same language as the input text.
+- "risk_indicators": An array of strings listing warning signs. If the category is "Safe", this MUST be an empty array [].
+- "language": The detected language name in English.
+
+Text to analyze:
+${text}`.trim();
 
     const result = await model.generateContent(prompt);
     const response = await result.response;
